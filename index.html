@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>OSINT TEST</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    
+    * {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    }
+    
+    /* Sidebar animations */
+    .sidebar-link {
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .sidebar-link::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 0 2px 2px 0;
+      transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .sidebar-link:hover::before,
+    .sidebar-link.active::before {
+      height: 70%;
+    }
+    
+    .sidebar-link:hover {
+      transform: translateX(4px);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .sidebar-link.active {
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+      box-shadow: inset 0 0 20px rgba(99, 102, 241, 0.1);
+    }
+    
+    /* Card animations */
+    .event-card {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      backdrop-filter: blur(10px);
+    }
+    
+    .event-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(99, 102, 241, 0.1);
+      border-color: rgba(99, 102, 241, 0.2);
+    }
+    
+    /* Tab animations */
+    .tab-btn {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .tab-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .tab-btn:hover::before {
+      left: 100%;
+    }
+    
+    .tab-btn.active {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+      transform: scale(1.02);
+    }
+    
+    /* Search bar glow */
+    .search-input {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .search-input:focus {
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1), 0 4px 12px rgba(0, 0, 0, 0.05);
+      border-color: #6366f1;
+    }
+    
+    /* Live indicator pulse */
+    .live-indicator {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.6;
+      }
+    }
+    
+    /* Button hover effects */
+    .action-btn {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Credibility badge animations */
+    .credibility-badge {
+      transition: all 0.3s ease;
+    }
+    
+    .credibility-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Header glassmorphism */
+    .header-glass {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05), 0 4px 20px rgba(0, 0, 0, 0.03);
+    }
+    
+    /* Sidebar gradient */
+    .sidebar-gradient {
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    }
+    
+    /* Fade in animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .fade-in-up {
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    
+    .fade-in-up-delay-1 {
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+      opacity: 0;
+    }
+    
+    .fade-in-up-delay-2 {
+      animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
+      opacity: 0;
+    }
+    
+    /* Source badge hover */
+    .source-badge {
+      transition: all 0.3s ease;
+    }
+    
+    .source-badge:hover {
+      background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(99, 102, 241, 0.2);
+    }
+    
+    /* User avatar hover */
+    .user-avatar {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .user-avatar:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-slate-900">
+  <div class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside class="hidden md:flex md:w-72 flex-col sidebar-gradient text-slate-100 border-r border-slate-800/50 shadow-2xl">
+      <div class="h-16 flex items-center px-5 border-b border-slate-800/50 fade-in-up">
+        <div class="flex items-center gap-2.5 text-lg font-bold">
+          <span class="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gradient-to-br from-cyan-500 to-fuchsia-600 text-white font-bold shadow-lg shadow-cyan-500/30">IN</span>
+          <span class="bg-gradient-to-r from-white to-cyan-300 bg-clip-text text-transparent">OSINT TEST</span>
+        </div>
+      </div>
+      <nav class="px-3 py-4 space-y-1.5 text-slate-300">
+        <a href="#" class="sidebar-link active flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+          Dashboard
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Events
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          Submissions
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Reports
+        </a>
+        <a href="#" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium hover:text-white">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Settings
+        </a>
+      </nav>
+      <div class="mt-auto p-4 fade-in-up-delay-2">
+        <div class="user-avatar w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/30">N</div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex-1 min-w-0">
+      <!-- Top bar -->
+      <header class="sticky top-0 z-40 header-glass border-b border-slate-200/50">
+        <div class="h-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-3 flex-nowrap overflow-visible">
+          <button id="mobileMenuBtn" class="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg text-slate-600 hover:bg-slate-100 transition-all duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="hidden md:flex items-center gap-2.5 text-slate-200 font-bold fade-in-up">
+            <span class="inline-flex items-center justify-center w-7 h-7 rounded-md bg-gradient-to-br from-cyan-600 to-fuchsia-600 text-white text-xs font-bold shadow-md">IN</span>
+            <span class="text-lg">OSINT TEST</span>
+          </div>
+       
+        <div class="flex-1 min-w-0 flex items-center gap-3">
+          <div class="relative flex-1 min-w-0 mr-3 z-0">
+            <input id="searchInput" type="text" placeholder="Search events, locations..." class="search-input w-full rounded-full border border-slate-200 bg-white/80 pl-4 pr-24 py-2.5 text-sm text-slate-700 placeholder-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50" />
+            <span class="live-indicator absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-green-500 shadow-lg shadow-green-500/50"></span>
+              <span class="text-green-600 text-xs font-bold">LIVE</span>
+            </span>
+          </div>
+        
+          <div class="hidden sm:flex items-center gap-2 flex-none whitespace-nowrap z-50 relative">
+            <select id="regionSelect" class="rounded-lg border border-cyan-400/30 bg-slate-900/70 text-cyan-200 px-3 py-2 text-sm shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 mt-0 align-middle">
+              <option value="all">All Regions</option>
+              <option value="India">India</option>
+              <option value="Jammu & Kashmir">Jammu & Kashmir</option>
+              <option value="PoK">PoK</option>
+            </select>
+            <button id="settingsBtn" class="inline-flex items-center justify-center w-10 h-10 rounded-lg text-cyan-300 hover:bg-slate-800 hover:shadow-md transition-all duration-200">
+              <!-- svg -->
+            </button>
+          </div>
+        </div>
+        
+      </header>
+
+      <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-2 fade-in-up">
+          <button data-tab="all" class="tab-btn inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">All</button>
+          <button data-tab="high" class="tab-btn active inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">High Credibility</button>
+          <button data-tab="unverified" class="tab-btn inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Unverified</button>
+          <button data-tab="recent" class="tab-btn inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">Recent</button>
+      </div>
+
+        <!-- Feed -->
+        <section id="eventFeed" class="mt-6 space-y-5">
+          <!-- Event cards will be dynamically loaded here -->
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Mock data - will be loaded from mockData.json
+    let allEvents = [];
+    let filteredEvents = [];
+    let currentFilter = 'all';
+    let currentRegion = 'all';
+    let currentSearch = '';
+    
+    // Google Gemini API Configuration
+    // SECURITY NOTE: API keys in frontend code are visible to users. For production, use a backend proxy.
+    let GEMINI_API_KEY = 'AIzaSyCgWkw4BYXER0edOqmR1hwV4genT7Zm6Ac';
+    // Model options: gemini-2.5-flash, gemini-1.5-flash, gemini-1.5-pro, gemini-2.0-flash-exp, gemini-pro
+    // Note: gemini-2.5-flash uses "thinking" tokens which count against the limit
+    const GEMINI_MODEL = 'gemini-2.5-flash';
+    const GEMINI_FALLBACK_MODELS = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+    const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+    
+    // Store analysis results for each event
+    const analysisCache = new Map();
+    const loadingStates = new Set();
+
+    // Function to format timestamp
+    function formatTimestamp(timestamp) {
+      const date = new Date(timestamp);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return '1 day ago';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+      return `${Math.floor(diffDays / 30)} months ago`;
+    }
+
+    // Function to get credibility badge classes
+    function getCredibilityClasses(level) {
+      const levelLower = (level || '').toLowerCase();
+      if (levelLower === 'high') {
+        return 'bg-gradient-to-r from-green-100 to-green-50 text-green-700 border-green-200/50';
+      } else if (levelLower === 'medium') {
+        return 'bg-gradient-to-r from-yellow-100 to-yellow-50 text-yellow-700 border-yellow-200/50';
+      } else {
+        return 'bg-gradient-to-r from-red-100 to-red-50 text-red-700 border-red-200/50';
+      }
+    }
+
+    // Function to create event card HTML
+    function createEventCard(event, index) {
+      const credibilityClasses = getCredibilityClasses(event.credibilityLevel);
+      const timeAgo = formatTimestamp(event.timestamp);
+      const delayClass = index < 3 ? `fade-in-up-delay-${index}` : 'fade-in-up';
+      
+      // Build X profile URL: prefer explicit handle, else derive from sourceName if it starts with '@', else fall back to sourceLink
+      const handle = event.sourceHandle || ((event.sourceName || '').startsWith('@') ? event.sourceName : '');
+      const profileUrl = handle ? `https://x.com/${handle.replace('@', '')}` : (event.sourceLink || '#');
+
+      return `
+        <article class="event-card ${delayClass} rounded-2xl border border-slate-200/80 shadow-lg overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <h2 class="text-xl font-bold text-slate-900 leading-tight flex-1">${event.headline}</h2>
+              <span id="credibility-level-${event.id}" class="credibility-badge inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${credibilityClasses} border whitespace-nowrap">
+                ${event.credibilityLevel.toUpperCase()} <span id="credibility-score-${event.id}" class="font-semibold">(${Math.round(event.credibilityScore * 100)}%)</span>
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium mb-4">${timeAgo}</p>
+            <p class="text-slate-700 leading-relaxed mb-4">${event.text}</p>
+            <div class="mt-4 flex items-center gap-2">
+              <span class="source-badge inline-flex items-center gap-2 text-sm px-4 py-2 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 text-slate-700 font-medium border border-slate-200/50">
+                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"></path></svg>
+                <a href="${profileUrl}" target="_blank" rel="noopener" class="underline decoration-dotted hover:text-blue-600">${event.sourceName}</a>
+                ${event.isVerified ? '<svg class="w-4 h-4 text-blue-500 ml-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>' : ''}
+              </span>
+            </div>
+            <div class="mt-5">
+              <button 
+                onclick="toggleAnalysis(${event.id})"
+                class="ai-analysis-btn inline-flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors cursor-pointer"
+                data-event-id="${event.id}"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path></svg>
+                AI-Powered Analysis
+                <svg id="chevron-${event.id}" class="w-3 h-3 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+              <div id="analysis-${event.id}" class="analysis-content hidden mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200/50">
+                <div id="analysis-loading-${event.id}" class="hidden flex items-center gap-2 text-sm text-indigo-600">
+                  <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  Analyzing with AI...
+                </div>
+                <div id="analysis-result-${event.id}" class="text-sm text-slate-700 leading-relaxed"></div>
+                <div id="analysis-error-${event.id}" class="hidden text-sm text-red-600"></div>
+              </div>
+            </div>
+          </div>
+          <div class="px-6 py-4 border-t border-slate-100 bg-gradient-to-r from-slate-50 to-white flex flex-wrap items-center justify-between text-sm text-slate-600">
+            <div class="flex items-center gap-6">
+              <span class="inline-flex items-center gap-2 font-medium">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                ${event.verifiedCount} sources
+              </span>
+              <span class="inline-flex items-center gap-2 font-medium">
+                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path></svg>
+                ${event.crowdCount} crowd reports
+              </span>
+            </div>
+            <div class="flex items-center gap-3 mt-3 sm:mt-0">
+              <button onclick="openMap(${event.id})" class="action-btn inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-indigo-300 text-slate-700 font-medium shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                View on Map
+              </button>
+              <button class="action-btn inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-indigo-300 text-slate-700 font-medium shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Export
+              </button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    // Function to render events
+    function renderEvents(events) {
+      const feed = document.getElementById('eventFeed');
+      if (!feed) return;
+      
+      // Apply region + search filters
+      const regionApplied = events.filter(e => {
+        if (currentRegion === 'all') return true;
+        if (currentRegion === 'India') return (e.region || '').toLowerCase() === 'national' || (e.region || '').toLowerCase() === 'india';
+        if (currentRegion === 'Jammu & Kashmir') return /jammu|kashmir|ladakh|srinagar|jammu|poonch|rajouri|kishtwar|bandipora|baramulla|anantnag|shopian|pulwama|ganderbal|budgam|kupwara|kathua|samba|udhampur|doda|ramban|reasi/i.test(e.region || e.text || e.headline);
+        if (currentRegion === 'PoK') return /gilgit|baltistan|muzaffarabad|rawalakot|kotli|mirpur|bhimber|neelum|hattian|ajk/i.test(e.region || e.text || e.headline);
+        return true;
+      });
+
+      const searchApplied = currentSearch
+        ? regionApplied.filter(e => {
+            const hay = `${e.headline || ''} ${e.text || ''} ${e.sourceName || ''} ${e.region || ''}`.toLowerCase();
+            return hay.includes(currentSearch);
+          })
+        : regionApplied;
+
+      feed.innerHTML = searchApplied.length > 0 
+        ? searchApplied.map((event, index) => createEventCard(event, index)).join('')
+        : '<p class="text-center text-slate-500 py-8">No events found</p>';
+      
+      // Observe cards for animations
+      feed.querySelectorAll('.event-card').forEach(card => {
+        observer.observe(card);
+      });
+      
+      // Restore analysis states if they exist
+      events.forEach(event => {
+        if (analysisCache.has(event.id)) {
+          const analysisDiv = document.getElementById(`analysis-${event.id}`);
+          const resultDiv = document.getElementById(`analysis-result-${event.id}`);
+          const chevron = document.getElementById(`chevron-${event.id}`);
+          if (analysisDiv && resultDiv) {
+            analysisDiv.classList.remove('hidden');
+            resultDiv.innerHTML = analysisCache.get(event.id);
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+          }
+        }
+      });
+    }
+    
+    // Function to toggle analysis section (global for onclick)
+    window.toggleAnalysis = function(eventId) {
+      const analysisDiv = document.getElementById(`analysis-${eventId}`);
+      const chevron = document.getElementById(`chevron-${eventId}`);
+      
+      if (!analysisDiv) return;
+      
+      const isHidden = analysisDiv.classList.contains('hidden');
+      
+      if (isHidden) {
+        // Show analysis section
+        analysisDiv.classList.remove('hidden');
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+        
+        // If analysis doesn't exist, fetch it
+        if (!analysisCache.has(eventId) && !loadingStates.has(eventId)) {
+          fetchAnalysis(eventId);
+        }
+      } else {
+        // Hide analysis section
+        analysisDiv.classList.add('hidden');
+        if (chevron) chevron.style.transform = 'rotate(0deg)';
+      }
+    };
+
+    // Known Indian locations and common synonyms for quick detection
+    const KNOWN_LOCATIONS = [
+      'Delhi','New Delhi','Mumbai','Bombay','Bengaluru','Bangalore','Hyderabad','Chennai','Kolkata','Calcutta','Pune','Ahmedabad','Jaipur','Lucknow','Kanpur','Nagpur','Visakhapatnam','Vizag','Surat','Patna','Bhopal','Indore','Thane','Ranchi','Srinagar','Jammu','Chandigarh','Guwahati','Kochi','Cochin','Thiruvananthapuram','Trivandrum','Kozhikode','Calicut','Coimbatore','Madurai','Varanasi','Prayagraj','Allahabad','Meerut','Agra','Noida','Gurugram','Gurgaon','Faridabad','Ghaziabad','Amritsar','Ludhiana','Jalandhar','Shimla','Dehradun','Leh','Kargil','Andaman','Nicobar','Port Blair','Kochi','Kurnool','Warangal','Mysuru','Mysore','Mangaluru','Mangalore','Hubballi','Belagavi','Vadodara','Rajkot','Nashik','Aurangabad','Thane','Kalyan','Dombivli','Varanasi','Gaya','Bhagalpur',
+      'Karnataka','Kerala','Tamil Nadu','Andhra Pradesh','Telangana','Maharashtra','Gujarat','Rajasthan','Punjab','Haryana','Uttar Pradesh','Madhya Pradesh','Bihar','Jharkhand','Odisha','West Bengal','Assam','Arunachal Pradesh','Sikkim','Meghalaya','Manipur','Mizoram','Nagaland','Tripura','Jammu & Kashmir','Jammu and Kashmir','Ladakh','Goa','Himachal Pradesh','Uttarakhand','Chhattisgarh','Delhi','Puducherry','Chandigarh','Lakshadweep','Andaman & Nicobar','Andaman and Nicobar',
+      'Churachandpur','Poonch','Mendhar','Kishtwar','Kathua','Kanachak','Samba','Kochi','Kochi','Kochi','Khanpi'
+    ];
+
+    function findLocationInText(text) {
+      if (!text) return null;
+      const lowered = text.toLowerCase();
+      // Prefer longest matches first to avoid partials (e.g., Delhi vs New Delhi)
+      const sorted = [...KNOWN_LOCATIONS].sort((a,b) => b.length - a.length);
+      for (const loc of sorted) {
+        const pattern = new RegExp(`(^|[^A-Za-z])${loc.replace(/[-/\\&]/g,'\\$&')}(?=[^A-Za-z]|$)`, 'i');
+        if (pattern.test(text)) return loc;
+        if (lowered.includes(loc.toLowerCase())) return loc;
+      }
+      // Simple heuristic: look for "<Place>, <State>" pattern
+      const m = text.match(/([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)*),\s*([A-Z][a-zA-Z&\s]+(?:Pradesh|Kashmir|Nadu|Bengal|Goa|Ladakh))/);
+      if (m) return `${m[1]}, ${m[2]}`;
+      return null;
+    }
+
+    // Open Google Maps for a given event using detected location
+    window.openMap = function(eventId) {
+      const event = allEvents.find(e => e.id === eventId);
+      if (!event) return;
+
+      // Use region if it exists and is not generic
+      let location = null;
+      if (event.region && !/^(national|india)$/i.test(event.region)) {
+        location = event.region;
+      }
+      // Else try to detect from headline/text
+      if (!location) {
+        location = findLocationInText(event.headline) || findLocationInText(event.text);
+      }
+
+      if (!location) return; // do nothing if no specific location
+      const query = encodeURIComponent(location);
+      const url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+      window.open(url, '_blank', 'noopener');
+    };
+    
+    // Function to fetch AI analysis
+    async function fetchAnalysis(eventId) {
+      // Use API key from code or localStorage
+      if (!GEMINI_API_KEY) {
+        const savedKey = localStorage.getItem('gemini_api_key');
+        if (savedKey) {
+          GEMINI_API_KEY = savedKey;
+        } else {
+          const apiKey = prompt('Please enter your Google Gemini API key:');
+          if (!apiKey) {
+            showAnalysisError(eventId, 'API key is required to generate analysis.');
+            return;
+          }
+          GEMINI_API_KEY = apiKey.trim();
+          // Store in localStorage for future use
+          localStorage.setItem('gemini_api_key', GEMINI_API_KEY);
+        }
+      }
+      
+      const event = allEvents.find(e => e.id === eventId);
+      if (!event) return;
+      
+      loadingStates.add(eventId);
+      showAnalysisLoading(eventId, true);
+      hideAnalysisError(eventId);
+      
+      try {
+        // Shorter prompt to reduce token usage for thinking models
+        const prompt = `You are an OSINT analyst. Read the following and return ONLY compact JSON on one line with keys: analysis (string, 2-3 short paragraphs), credibility_percent (number 0-100 without % sign).
+
+Title: ${event.headline}
+Details: ${event.text}
+Source: ${event.sourceName}
+Region: ${event.region || 'N/A'}
+Observed signals: verified_sources=${event.verifiedCount}, crowd_reports=${event.crowdCount}
+
+Rules:
+- Respond with strictly JSON like {"analysis":"...","credibility_percent":85} and nothing else.
+- credibility_percent reflects your confidence in veracity given open-source indicators.`;
+
+        const apiUrl = `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`;
+        
+        const fullPrompt = prompt;
+        
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: fullPrompt
+              }]
+            }],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 4096,
+            },
+            safetySettings: [
+              {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              },
+              {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_MEDIUM_AND_ABOVE"
+              }
+            ]
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('API Error Response:', errorData);
+          throw new Error(errorData.error?.message || `API error: ${response.status} ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Gemini API Response:', JSON.stringify(data, null, 2));
+        
+        // Initialize analysis variable
+        let analysis = '';
+        let credibilityPercentFromAI = null;
+        
+        // Check for safety filters or blocked content
+        if (data.candidates && data.candidates.length > 0) {
+          const candidate = data.candidates[0];
+          
+          // Check if content was blocked by safety filters
+          if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+            const reason = candidate.finishReason;
+            const safetyRatings = candidate.safetyRatings || [];
+            console.warn('Content may be blocked:', { finishReason: reason, safetyRatings });
+            
+            if (reason === 'SAFETY') {
+              throw new Error('Content was blocked by safety filters. Please try a different event.');
+            }
+            if (reason === 'RECITATION') {
+              throw new Error('Content was blocked due to recitation concerns.');
+            }
+            if (reason === 'MAX_TOKENS') {
+              console.warn('Response hit token limit, but may have partial content');
+              // Continue to try extracting partial content
+            }
+            // Continue even if finishReason is not STOP, as some models may return partial content
+          }
+          
+          // Extract text from response - try multiple paths
+          if (candidate.content) {
+            // Check if parts array exists and has content
+            if (candidate.content.parts) {
+              if (Array.isArray(candidate.content.parts) && candidate.content.parts.length > 0) {
+                for (const part of candidate.content.parts) {
+                  if (part.text && part.text.trim()) {
+                    const raw = part.text.trim();
+                    // Try to parse strict JSON as requested
+                    try {
+                      const obj = JSON.parse(raw);
+                      if (obj && (obj.analysis || obj.credibility_percent !== undefined)) {
+                        if (obj.analysis) analysis = obj.analysis;
+                        if (obj.credibility_percent !== undefined) {
+                          const num = Number(obj.credibility_percent);
+                          if (!Number.isNaN(num)) credibilityPercentFromAI = Math.max(0, Math.min(100, num));
+                        }
+                        break;
+                      }
+                    } catch (_) {
+                      // Not JSON; fallback to raw text
+                      analysis = raw;
+                      // Try to extract a number like 85%
+                      const m = raw.match(/(\d{1,3})\s*%/);
+                      if (m) {
+                        const n = Number(m[1]);
+                        if (!Number.isNaN(n)) credibilityPercentFromAI = Math.max(0, Math.min(100, n));
+                      }
+                      break;
+                    }
+                  }
+                }
+              } else {
+                console.warn('Content parts array is empty or invalid');
+              }
+            } else {
+              console.warn('Content object does not have parts array. Content keys:', Object.keys(candidate.content));
+            }
+            
+            // Alternative: content might have text directly
+            if (!analysis && candidate.content.text) {
+              analysis = candidate.content.text;
+            }
+          } else {
+            console.warn('Candidate does not have content object');
+          }
+          
+          // Alternative: text might be directly in candidate
+          if (!analysis && candidate.text) {
+            const raw = candidate.text.trim();
+            try {
+              const obj = JSON.parse(raw);
+              if (obj && (obj.analysis || obj.credibility_percent !== undefined)) {
+                if (obj.analysis) analysis = obj.analysis;
+                if (obj.credibility_percent !== undefined) {
+                  const num = Number(obj.credibility_percent);
+                  if (!Number.isNaN(num)) credibilityPercentFromAI = Math.max(0, Math.min(100, num));
+                }
+              }
+            } catch (_) {
+              analysis = raw;
+              const m = raw.match(/(\d{1,3})\s*%/);
+              if (m) {
+                const n = Number(m[1]);
+                if (!Number.isNaN(n)) credibilityPercentFromAI = Math.max(0, Math.min(100, n));
+              }
+            }
+          }
+          
+          // Log if we found content despite non-STOP finishReason
+          if (analysis && candidate.finishReason !== 'STOP') {
+            console.log(`Extracted partial content with finishReason: ${candidate.finishReason}`);
+          }
+          
+          // If still no analysis and we have MAX_TOKENS, provide helpful message
+          if (!analysis && candidate.finishReason === 'MAX_TOKENS') {
+            console.error('No content found despite MAX_TOKENS. Full candidate:', JSON.stringify(candidate, null, 2));
+            // Check usage metadata for thinking tokens
+            if (data.usageMetadata) {
+              console.warn('Token usage:', {
+                promptTokens: data.usageMetadata.promptTokenCount,
+                totalTokens: data.usageMetadata.totalTokenCount,
+                thoughtsTokens: data.usageMetadata.thoughtsTokenCount || 0,
+                outputTokens: data.usageMetadata.totalTokenCount - data.usageMetadata.promptTokenCount - (data.usageMetadata.thoughtsTokenCount || 0)
+              });
+            }
+            throw new Error('Model used all tokens for thinking/internal reasoning. No output text was generated. Try increasing maxOutputTokens or using a different model.');
+          }
+        }
+        
+        // Check for promptFeedback (safety feedback)
+        if (data.promptFeedback && data.promptFeedback.blockReason) {
+          console.warn('Prompt blocked:', data.promptFeedback);
+          throw new Error(`Prompt was blocked: ${data.promptFeedback.blockReason}`);
+        }
+        
+        // Final fallback - check if response is directly in the data
+        if (!analysis && data.text) {
+          analysis = data.text;
+        }
+        
+        // If still no analysis, check if candidates array is empty
+        if (!analysis) {
+          if (data.candidates && data.candidates.length === 0) {
+            console.error('No candidates in response. Full response:', JSON.stringify(data, null, 2));
+            throw new Error('API returned no candidates. This might be due to safety filters or model unavailability.');
+          }
+          console.error('Unexpected response structure. Full response:', JSON.stringify(data, null, 2));
+          console.error('Response structure analysis:', {
+            hasCandidates: !!data.candidates,
+            candidatesLength: data.candidates?.length,
+            firstCandidateKeys: data.candidates?.[0] ? Object.keys(data.candidates[0]) : [],
+            topLevelKeys: Object.keys(data)
+          });
+          throw new Error(`Unable to parse response. Response keys: ${Object.keys(data).join(', ')}. Check console for full response.`);
+        }
+        
+        // Cache the analysis
+        analysisCache.set(eventId, analysis);
+        
+        // Display the analysis
+        showAnalysisResult(eventId, analysis);
+        // If Gemini returned credibility percent, update the UI
+        if (typeof credibilityPercentFromAI === 'number') {
+          updateCredibility(eventId, credibilityPercentFromAI);
+        }
+        showAnalysisLoading(eventId, false);
+        loadingStates.delete(eventId);
+        
+      } catch (error) {
+        console.error('Error fetching analysis:', error);
+        console.error('Full error details:', {
+          message: error.message,
+          stack: error.stack,
+          eventId: eventId
+        });
+        showAnalysisLoading(eventId, false);
+        const errorMsg = error.message || 'Unknown error occurred';
+        showAnalysisError(eventId, `Error: ${errorMsg}. Please check the browser console for more details.`);
+        loadingStates.delete(eventId);
+      }
+    }
+    
+    // Helper functions for analysis display
+    function showAnalysisLoading(eventId, show) {
+      const loadingDiv = document.getElementById(`analysis-loading-${eventId}`);
+      if (loadingDiv) {
+        if (show) {
+          loadingDiv.classList.remove('hidden');
+        } else {
+          loadingDiv.classList.add('hidden');
+        }
+      }
+    }
+    
+    function showAnalysisResult(eventId, result) {
+      const resultDiv = document.getElementById(`analysis-result-${eventId}`);
+      if (resultDiv) {
+        // Format the result with line breaks
+        resultDiv.innerHTML = result.split('\n').map(line => {
+          if (line.trim().startsWith('1.') || line.trim().startsWith('2.') || line.trim().startsWith('3.') || line.trim().startsWith('4.') || line.trim().startsWith('5.')) {
+            return `<p class="font-semibold text-indigo-900 mb-2">${line}</p>`;
+          }
+          return `<p class="mb-2">${line || '<br>'}</p>`;
+        }).join('');
+      }
+    }
+    
+    // Update credibility badge and score from AI percent
+    function updateCredibility(eventId, credibilityPercent) {
+      const levelEl = document.getElementById(`credibility-level-${eventId}`);
+      const scoreEl = document.getElementById(`credibility-score-${eventId}`);
+      if (!levelEl || !scoreEl) return;
+      const percent = Math.round(Math.max(0, Math.min(100, Number(credibilityPercent) || 0)));
+      // Determine level and classes
+      const level = percent >= 80 ? 'High' : percent >= 60 ? 'Medium' : 'Low';
+      const classes = getCredibilityClasses(level);
+      // Reset classes while keeping base styles
+      levelEl.className = `credibility-badge inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${classes} border whitespace-nowrap`;
+      levelEl.firstChild && (levelEl.firstChild.textContent = `${level.toUpperCase()} `);
+      scoreEl.textContent = `(${percent}%)`;
+    }
+
+    function showAnalysisError(eventId, error) {
+      const errorDiv = document.getElementById(`analysis-error-${eventId}`);
+      if (errorDiv) {
+        errorDiv.textContent = error;
+        errorDiv.classList.remove('hidden');
+      }
+    }
+    
+    function hideAnalysisError(eventId) {
+      const errorDiv = document.getElementById(`analysis-error-${eventId}`);
+      if (errorDiv) {
+        errorDiv.classList.add('hidden');
+      }
+    }
+
+    // Function to filter events
+    function filterEvents(filter) {
+      currentFilter = filter;
+      switch(filter) {
+        case 'high':
+          filteredEvents = allEvents.filter(e => e.credibilityLevel.toLowerCase() === 'high');
+          break;
+        case 'unverified':
+          filteredEvents = allEvents.filter(e => !e.isVerified);
+          break;
+        case 'recent':
+          // Show events from last 7 days
+          const weekAgo = new Date();
+          weekAgo.setDate(weekAgo.getDate() - 7);
+          filteredEvents = allEvents.filter(e => new Date(e.timestamp) > weekAgo);
+          break;
+        default:
+          filteredEvents = allEvents;
+      }
+      renderEvents(filteredEvents);
+    }
+
+    // Load mock data
+    async function loadEvents() {
+      try {
+        const response = await fetch('mockData.json');
+        allEvents = await response.json();
+        // Sort by timestamp (newest first)
+        allEvents.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        filteredEvents = allEvents;
+        filterEvents('all');
+      } catch (error) {
+        console.error('Error loading events:', error);
+        document.getElementById('eventFeed').innerHTML = 
+          '<p class="text-center text-red-500 py-8">Error loading events. Please check mockData.json exists.</p>';
+      }
+    }
+
+    // Enhanced tab switching with smooth animations
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Remove active state from all tabs
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('active', 'bg-gradient-to-r', 'from-indigo-600', 'to-purple-600', 'text-white', 'shadow-lg');
+          b.classList.add('bg-slate-100', 'text-slate-700');
+        });
+        
+        // Add active state to clicked tab
+        btn.classList.remove('bg-slate-100', 'text-slate-700');
+        btn.classList.add('active', 'bg-gradient-to-r', 'from-indigo-600', 'to-purple-600', 'text-white', 'shadow-lg');
+        
+        // Filter events
+        const filter = btn.getAttribute('data-tab');
+        filterEvents(filter);
+      });
+    });
+
+    // Region select wiring
+    const regionSelect = document.getElementById('regionSelect');
+    if (regionSelect) {
+      regionSelect.addEventListener('change', () => {
+        currentRegion = regionSelect.value;
+        filterEvents(currentFilter);
+      });
+    }
+
+    // Search wiring (live)
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        currentSearch = searchInput.value.trim().toLowerCase();
+        filterEvents(currentFilter);
+      });
+    }
+
+    // Simple settings modal for theme toggle
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+      settingsBtn.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+      });
+    }
+
+    // Add smooth scroll behavior
+    document.documentElement.style.scrollBehavior = 'smooth';
+
+    // Add intersection observer for fade-in animations on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+
+    // Load API key from localStorage if available (overrides default)
+    const savedApiKey = localStorage.getItem('gemini_api_key');
+    if (savedApiKey) {
+      GEMINI_API_KEY = savedApiKey;
+    }
+    
+    // Load events when page loads
+    loadEvents();
+
+    // Public helper to fetch districts for J&K and PoK
+    window.getJkPokDistricts = async function() {
+      const res = await fetch('data/jk_pok_districts.json');
+      if (!res.ok) throw new Error('Failed to fetch jk_pok_districts.json');
+      return await res.json();
+    }
+  </script>
+</body>
+</html>
+
+
